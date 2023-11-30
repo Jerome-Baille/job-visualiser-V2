@@ -1,0 +1,83 @@
+import { useSelector } from 'react-redux';
+import AuthView from '../Auth/Auth'
+import Toaster from './Toaster';
+import Loader from './Loader';
+import Header from '../Header/Header';
+import { Outlet } from 'react-router-dom';
+import { Box, Flex, useBreakpointValue } from '@chakra-ui/react';
+import Sidebar from './Sidebar';
+import { AuthState } from '../interfaces';
+import { useEffect, useState } from 'react';
+import { checkTokenValidity } from '../services/authService';
+import { useDispatch } from 'react-redux';
+import { setUserAuthenticated } from '../redux/actions/authActions';
+
+interface AppState {
+  auth: AuthState;
+  loading: boolean;
+}
+
+function Layout() {
+  const isAuthenticated = useSelector((state: { auth: AuthState }) => state.auth.isAuthenticated);
+  const isLoading = useSelector((state: AppState) => state.loading);
+  const dispatch = useDispatch();
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
+  const isLargerThanMD = useBreakpointValue({ base: false, md: true });
+
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      const isValidToken = await checkTokenValidity();
+      dispatch(setUserAuthenticated(isValidToken));
+      setIsAuthChecked(true);
+    };
+
+    checkAuthStatus();
+  }, [dispatch]);
+
+  if (!isAuthChecked) {
+    return <Loader />
+  }
+
+  return (
+    <>
+      {isLoading && <Loader />}
+
+      <Box className='app'>
+        <Box className='page'>
+          <Header />
+
+          {isAuthenticated ? (
+            <Flex
+              maxW={'100vw'}
+              margin={'auto'}
+            >
+              {isLargerThanMD && <Sidebar />}
+              <Box className="background-container">
+                <main className="main-container">
+                  <Outlet />
+                </main>
+              </Box>
+            </Flex>
+          ) : (
+            <Flex
+              maxW={'100vw'}
+              margin={'auto'}
+            >
+              <Box className="background-container">
+                <main className="main-container">
+                  <AuthView />
+                </main>
+              </Box>
+            </Flex>
+          )}
+
+        </Box>
+      </Box>
+
+
+      <Toaster />
+    </>
+  )
+}
+
+export default Layout;
