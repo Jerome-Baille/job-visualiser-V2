@@ -4,8 +4,11 @@ import { Formik, Field, FieldProps, Form, ErrorMessage } from 'formik';
 import { validationSchema } from '../helpers/formValidationSchema';
 import { FormValues, JobData } from '../interfaces';
 import { postOpportunity } from '../services/jobService';
+import { showToast } from '../services/toastService';
+import { useNavigate } from 'react-router-dom';
 
 const Create: React.FC = () => {
+    const navigate = useNavigate();
     const initialValues: FormValues = {
         name: '',
         company: '',
@@ -19,8 +22,13 @@ const Create: React.FC = () => {
 
     const handleSubmit = (values: JobData) => {
         postOpportunity(values)
-            .then((res) => console.log(res))
-            .catch((err) => console.log(err));
+            .then((res) => {
+                showToast({ type: 'success', message: res.data.message });
+                navigate('/')
+            })
+            .catch((err) => {
+                showToast({ type: 'error', message: err.response.data.message });
+            });
     }
 
     return (
