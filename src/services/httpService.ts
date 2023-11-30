@@ -6,14 +6,30 @@ import { setUserAuthenticated } from '../redux/actions/authActions';
 import { showLoader, hideLoader } from '../redux/reducers/loadingSlice';
 import { getTokenAndUserId, setTokensAndUserId } from '../helpers/cookieHelper';
 
+const handleLogout = (errorMessage: string) => {
+    store.dispatch(setUserAuthenticated(false));
+    logout();
+    throw new Error(errorMessage);
+}
+
 // Create an axios instance
 const instance = axios.create();
 
 // Function to refresh token
 async function refreshTokenFunction() {
     const { refreshToken } = getTokenAndUserId();
+
+    if (!refreshToken || refreshToken === 'undefined') {
+        handleLogout('Refresh token is missing');
+    }
+
     const response = await instance.post(`${API_ENDPOINTS.auth}/refresh`, { refreshToken });
     const { accessToken: newAccessToken, refreshToken: newRefreshToken, accessTokenExpireDate: newAccessTokenExpireDate, refreshTokenExpireDate: newRefreshTokenExpireDate, userId, userIdExpireDate } = response.data;
+
+    if (!newAccessToken || !newRefreshToken) {
+        handleLogout('Tokens are missing in the response');
+    }
+
     setTokensAndUserId(newAccessToken, newRefreshToken, userId, newAccessTokenExpireDate, newRefreshTokenExpireDate, userIdExpireDate);
     return newAccessToken;
 }
@@ -30,10 +46,7 @@ instance.interceptors.request.use(async (config) => {
 
     // If refresh token is missing, logout the user
     if (!refreshToken || (refreshTokenExpireDate && new Date().getTime() > new Date(refreshTokenExpireDate).getTime())) {
-        store.dispatch(setUserAuthenticated(false));
-        logout();
-        store.dispatch(hideLoader());
-        throw new Error('Refresh token is missing');
+        handleLogout('Refresh token is missing');
     }
 
     // If token is expired, refresh it
@@ -41,9 +54,7 @@ instance.interceptors.request.use(async (config) => {
         try {
             accessToken = await refreshTokenFunction();
         } catch (error) {
-            // Hide loader
-            store.dispatch(hideLoader());
-            throw new Error('Failed to refresh access token');
+            handleLogout('Failed to refresh access token');
         }
     }
 
@@ -62,6 +73,12 @@ instance.interceptors.response.use((response) => {
 }, async (error) => {
     if (error.config && error.response && (error.response.status === 403 || error.response.status === 401)) {
         const originalRequest = error.config;
+        const retryCount = originalRequest._retryCount || 0;
+
+        if (retryCount >= 3) {
+            store.dispatch(hideLoader());
+            throw new Error('Failed to refresh access token after 3 retries');
+        }
 
         try {
             // Refresh token
@@ -69,6 +86,8 @@ instance.interceptors.response.use((response) => {
 
             // Set token in headers
             originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+            originalRequest._retryCount = retryCount + 1;
 
             // Retry the original request
             return instance(originalRequest);

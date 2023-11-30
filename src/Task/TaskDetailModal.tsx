@@ -53,12 +53,12 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ task, isOpen, onClo
                   <Textarea value={newUpdate} onChange={(e) => setNewUpdate(e.target.value)} />
                   <IconButton
                     aria-label="Validate update"
-                    icon={<FontAwesomeIcon icon={faCheck} />}
+                    icon={<FontAwesomeIcon icon={faCheck} color='green'/>}
                     onClick={handleValidateUpdate}
                   />
                   <IconButton
                     aria-label="Cancel update"
-                    icon={<FontAwesomeIcon icon={faTimes} />}
+                    icon={<FontAwesomeIcon icon={faTimes} color="red" />}
                     onClick={() => setShowInput(false)}
                   />
                 </Flex>

@@ -7,6 +7,11 @@ export const getProfile = async () => {
     return response.data;
 }
 
+export const searchUser = async (searchTerm: string) => {
+    const response = await http.get(`${API_ENDPOINTS.user}/search?username=${searchTerm}`);
+    return response.data;
+}
+
 export const patchUser = async (userId: number, profile: ProfileData) => {
     const response = await http.patch(`${API_ENDPOINTS.user}/${userId}`, profile);
     return response;
