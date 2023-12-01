@@ -130,7 +130,7 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ isOpen, onClose, cancelRef, ini
                                         </Flex>
 
                                         {jobFiltered.length > 0 && (
-                                            <List spacing={3}>
+                                            <List spacing={3} maxH='200px' overflowY='auto'>
                                                 {jobFiltered.map((job: JobData) => (
                                                     <ListItem
                                                         key={job.id}
@@ -149,6 +149,14 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ isOpen, onClose, cancelRef, ini
                                                         {job.name} ({job.company})
                                                     </ListItem>
                                                 ))}
+                                            </List>
+                                        )}
+
+                                        {searchValueJobs !== '' && jobFiltered.length === 0 && (
+                                            <List spacing={3}>
+                                                <ListItem>
+                                                    No match found.
+                                                </ListItem>
                                             </List>
                                         )}
 
