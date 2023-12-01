@@ -1,13 +1,20 @@
-import { useState } from "react";
-import { Accordion, AccordionItem, AccordionButton, AccordionPanel, Box, FormControl, FormLabel, Input, Select, Button, HStack, VStack } from "@chakra-ui/react";
+import { useEffect, useState } from "react";
+import { Accordion, AccordionItem, AccordionButton, AccordionPanel, Select, Button, HStack, VStack } from "@chakra-ui/react";
 import { JobState } from "../interfaces";
+import JobsSearch from "../components/JobsSearch";
 
 export const TableFilter = ({ jobs, setJobFiltered }: JobState) => {
+    const [searchValueJobs, setSearchValueJobs] = useState('');
     const [filterForm, setFilterForm] = useState({
-        search: "",
         typeFilter: "",
         decisionFilter: ""
     });
+
+    useEffect(() => {
+        if (searchValueJobs === '') {
+            setJobFiltered(jobs);
+        }
+    }, [searchValueJobs, jobs, setJobFiltered]);
 
     function filterJobs(filterForm: { typeFilter: string, decisionFilter: string }) {
         const { typeFilter, decisionFilter } = filterForm;
@@ -39,29 +46,12 @@ export const TableFilter = ({ jobs, setJobFiltered }: JobState) => {
 
     function handleReset() {
         setFilterForm({
-            search: "",
             typeFilter: "",
             decisionFilter: ""
         });
         setJobFiltered(jobs)
+        setSearchValueJobs("")
     }
-
-    const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const searchValue = event.target.value.toLowerCase();
-
-        setFilterForm({
-            ...filterForm,
-            search: searchValue
-        });
-
-        const filteredJobs = jobs.filter(job =>
-            (job.name ? job.name.toLowerCase() : '').includes(searchValue) ||
-            (job.company ? job.company.toLowerCase() : '').includes(searchValue)
-        );
-
-        setJobFiltered(filteredJobs);
-    };
-
 
     return (
         <Accordion allowToggle className="home-tabs">
@@ -71,18 +61,7 @@ export const TableFilter = ({ jobs, setJobFiltered }: JobState) => {
                 </h2>
                 <AccordionPanel>
                     <VStack gap={4} align="stretch">
-                        <Box as="form" onSubmit={handleSearch}>
-                            <FormControl id="formSearch">
-                                <FormLabel>Search</FormLabel>
-                                <Input
-                                    type="text"
-                                    placeholder="Enter job title or company name"
-                                    name="search"
-                                    value={filterForm.search}
-                                    onChange={handleSearch}
-                                />
-                            </FormControl>
-                        </Box>
+                        <JobsSearch setJobFiltered={setJobFiltered} searchValue={searchValueJobs} setSearchValue={setSearchValueJobs} />
 
                         <HStack gap={4}>
                             <Select value={filterForm.typeFilter} placeholder="Filter by type" id="typeFilter" name="typeFilter" onChange={handleChange}>

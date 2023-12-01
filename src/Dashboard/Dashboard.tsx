@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { getOpportunities } from '../services/jobService';
 import { useSelector } from 'react-redux';
 import { AuthState, JobData } from '../interfaces';
-
 import NotLogged from '../components/NotLogged';
 import InProgressJobs from './InProgressJobs';
 import { Box, Flex, Grid, Stack, Text, VStack } from "@chakra-ui/react";
@@ -11,6 +10,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleCheck, faCircleQuestion, faCircleXmark, faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
 import Task from '../Task/Task';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import React from 'react';
+import { JobsContext } from '../contexts/JobsContext';
+
 
 interface JobBoxProps {
     icon: IconProp;
@@ -48,28 +50,30 @@ const Dashboard = () => {
     );
 
     return (
-        <Box>
+        <JobsContext.Provider value={jobs}>
             <Box>
-                {isAuthenticated ? (
-                    <Stack spacing={4}>
-                        <Grid templateColumns="repeat(auto-fit, minmax(150px, 1fr))" gap={4}>
-                            <JobBox icon={faCircleCheck} title="Positive" jobs={positiveJobs} color='green.500' />
-                            <JobBox icon={faHourglassHalf} title="In Progress" jobs={inProgressJobs} color='blue.500' />
-                            <JobBox icon={faCircleQuestion} title="Unknown" jobs={unknownJobs} color='gray.900' />
-                            <JobBox icon={faCircleXmark} title="Negative" jobs={negativeJobs} color='red.700' />
-                        </Grid>
+                <Box>
+                    {isAuthenticated ? (
+                        <Stack spacing={4}>
+                            <Grid templateColumns="repeat(auto-fit, minmax(150px, 1fr))" gap={4}>
+                                <JobBox icon={faCircleCheck} title="Positive" jobs={positiveJobs} color='green.500' />
+                                <JobBox icon={faHourglassHalf} title="In Progress" jobs={inProgressJobs} color='blue.500' />
+                                <JobBox icon={faCircleQuestion} title="Unknown" jobs={unknownJobs} color='gray.900' />
+                                <JobBox icon={faCircleXmark} title="Negative" jobs={negativeJobs} color='red.700' />
+                            </Grid>
 
-                        <Task />
+                            <Task />
 
-                        <ChartContainer jobs={jobs} />
+                            <ChartContainer jobs={jobs} />
 
-                        <InProgressJobs jobs={jobs} />
-                    </Stack>
-                ) : (
-                    <NotLogged />
-                )}
+                            <InProgressJobs jobs={jobs} />
+                        </Stack>
+                    ) : (
+                        <NotLogged />
+                    )}
+                </Box>
             </Box>
-        </Box>
+        </JobsContext.Provider>
     );
 };
 

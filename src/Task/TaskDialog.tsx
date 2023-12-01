@@ -1,12 +1,13 @@
 import React, { RefObject, useEffect, useRef, useState } from 'react';
 import { FormLabel, AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogContent, AlertDialogOverlay, Button, Input, Select, FormControl, List, ListItem, Flex, IconButton } from "@chakra-ui/react";
 import { Formik, Form, ErrorMessage, Field, FieldProps, FormikHelpers } from 'formik';
-import { TaskData, UserData } from '../interfaces';
+import { JobData, TaskData, UserData } from '../interfaces';
 import { taskValidationSchema } from '../helpers/formValidationSchema';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { searchUser } from '../services/userService';
 import { showToast } from '../services/toastService';
+import JobsSearch from '../components/JobsSearch';
 
 interface TaskDialogProps {
     isOpen: boolean;
@@ -20,14 +21,23 @@ interface TaskDialogProps {
 const TaskDialog: React.FC<TaskDialogProps> = ({ isOpen, onClose, cancelRef, initialValues, validationSchema, onSubmit }) => {
     const [showSearch, setShowSearch] = useState(false);
     const [usernames, setUsernames] = useState([]);
-    const [searchValue, setSearchValue] = useState('');
+    const [searchValueUser, setSearchValueUser] = useState('');
+    const [searchValueJobs, setSearchValueJobs] = useState('');
     const searchInputRef = useRef<HTMLInputElement>(null);
+    const [jobFiltered, setJobFiltered] = useState<JobData[]>([]);
+    const [selectedJob, setSelectedJob] = useState<JobData[]>([]);
 
     useEffect(() => {
         if (showSearch && searchInputRef.current) {
             searchInputRef.current.focus();
         }
     }, [showSearch]);
+
+    useEffect(() => {
+        if (searchValueJobs === '') {
+            setJobFiltered([]);
+        }
+    }, [searchValueJobs]);
 
     return (
         <AlertDialog isOpen={isOpen} leastDestructiveRef={cancelRef} onClose={onClose}>
@@ -41,7 +51,9 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ isOpen, onClose, cancelRef, ini
                         // Reset the state after form submission
                         setShowSearch(false);
                         setUsernames([]);
-                        setSearchValue('');
+                        setSearchValueUser('');
+                        setJobFiltered([]);
+                        setSelectedJob([]);
                     }}
                 >
                     {({ isSubmitting, setFieldValue, values }) => (
@@ -101,22 +113,54 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ isOpen, onClose, cancelRef, ini
                                             )}
                                         </Field>
 
-                                        <Field name="jobId">
-                                            {({ field, form }: FieldProps) => (
-                                                <FormControl isInvalid={!!(form.errors.jobId && form.touched.jobId)}>
-                                                    <FormLabel>Job IDs (comma-separated)</FormLabel>
-                                                    <Input
-                                                        {...field}
-                                                        placeholder="Job IDs (comma-separated)"
-                                                        onChange={event => {
-                                                            const jobIdsArray = event.target.value.split(',').map(id => id.trim());
-                                                            form.setFieldValue('jobId', jobIdsArray);
+                                        <Flex
+                                            w='100%'
+                                            justifyContent="space-between"
+                                            alignItems="center"
+                                            gap={4}
+                                        >
+                                            <JobsSearch setJobFiltered={setJobFiltered} searchValue={searchValueJobs} setSearchValue={setSearchValueJobs} />
+                                            <IconButton
+                                                aria-label="Clear jobs search"
+                                                icon={<FontAwesomeIcon icon={faTimes} color='red' />}
+                                                onClick={() => {
+                                                    setSearchValueJobs('');
+                                                }}
+                                            />
+                                        </Flex>
+
+                                        {jobFiltered.length > 0 && (
+                                            <List spacing={3}>
+                                                {jobFiltered.map((job: JobData) => (
+                                                    <ListItem
+                                                        key={job.id}
+                                                        onClick={() => {
+                                                            if (values.jobId && job.id && !values.jobId.includes(job.id)) {
+                                                                setFieldValue('jobId', [...values.jobId, job.id]);
+                                                                setSelectedJob([...selectedJob, job]);
+                                                                setSearchValueJobs('');
+                                                            } else {
+                                                                setSearchValueJobs('');
+                                                                showToast({ type: 'error', message: 'This job has already been added.' });
+                                                            }
                                                         }}
-                                                    />
-                                                    <ErrorMessage name="jobId" />
-                                                </FormControl>
-                                            )}
-                                        </Field>
+                                                        cursor="pointer"
+                                                    >
+                                                        {job.name} ({job.company})
+                                                    </ListItem>
+                                                ))}
+                                            </List>
+                                        )}
+
+                                        {selectedJob.length > 0 && (
+                                            <List spacing={3}>
+                                                {selectedJob.map((job: JobData) => (
+                                                    <ListItem key={job.id}>
+                                                        {job.name} ({job.company})
+                                                    </ListItem>
+                                                ))}
+                                            </List>
+                                        )}
 
                                         <Button onClick={() => setShowSearch(!showSearch)}>
                                             <FontAwesomeIcon icon={faPlus} />
@@ -133,14 +177,14 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ isOpen, onClose, cancelRef, ini
                                                 <Input
                                                     ref={searchInputRef}
                                                     placeholder="Search for user"
-                                                    value={searchValue}
-                                                    onChange={event => setSearchValue(event.target.value)}
+                                                    value={searchValueUser}
+                                                    onChange={event => setSearchValueUser(event.target.value)}
                                                 />
                                                 <IconButton
                                                     aria-label="Validate update"
                                                     icon={<FontAwesomeIcon icon={faCheck} color='green' />}
                                                     onClick={async () => {
-                                                        const response = await searchUser(searchValue);
+                                                        const response = await searchUser(searchValueUser);
                                                         if (response.length === 0) {
                                                             showToast({ type: 'error', message: 'No match found.' });
                                                         } else {
@@ -152,7 +196,7 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ isOpen, onClose, cancelRef, ini
                                                     aria-label="Cancel update"
                                                     icon={<FontAwesomeIcon icon={faTimes} color='red' />}
                                                     onClick={() => {
-                                                        setSearchValue('');
+                                                        setSearchValueUser('');
                                                         setShowSearch(false)
                                                     }}
                                                 />
@@ -167,7 +211,7 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ isOpen, onClose, cancelRef, ini
                                                         onClick={() => {
                                                             if (values.userIds && user.id && !values.userIds.includes(user.id)) {
                                                                 setFieldValue('userIds', [...values.userIds, user.id]);
-                                                                setSearchValue('');
+                                                                setSearchValueUser('');
                                                                 setShowSearch(false);
                                                             } else {
                                                                 showToast({ type: 'error', message: 'This user has already been added.' });
@@ -189,7 +233,10 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ isOpen, onClose, cancelRef, ini
                                         onClose();
                                         setShowSearch(false);
                                         setUsernames([]);
-                                        setSearchValue('');
+                                        setSearchValueUser('');
+                                        setSearchValueJobs('');
+                                        setJobFiltered([]);
+                                        setSelectedJob([]);
                                     }}>
                                         Cancel
                                     </Button>

@@ -11,6 +11,7 @@ import useWindowSize from "../helpers/useWindowSize";
 import { getOpportunities } from "../services/jobService";
 import { Paginator } from "./Paginator";
 import { Card, CardBody, Table, TableCaption, VStack } from "@chakra-ui/react";
+import { JobsContext } from "../contexts/JobsContext";
 
 
 const ListTable = () => {
@@ -78,10 +79,12 @@ const ListTable = () => {
 
     return (
         <VStack align='stretch' gap={4}>
-            <TableFilter
-                jobs={jobs}
-                setJobFiltered={setJobFiltered}
-            />
+            <JobsContext.Provider value={jobs}>
+                <TableFilter
+                    jobs={jobs}
+                    setJobFiltered={setJobFiltered}
+                />
+            </JobsContext.Provider>
 
             <Card>
                 <CardBody>
