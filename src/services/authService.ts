@@ -1,7 +1,7 @@
 import axios from 'axios';
 import http from './httpService';
 import { API_ENDPOINTS } from '../config/apiConfig';
-import { setTokensAndUserId, removeTokensAndUserId } from '../helpers/cookieHelper';
+import { setToken, removeTokensAndUserId } from '../helpers/cookieHelper';
 
 export const register = async (username: string, password: string) => {
     const response = await axios.post(`${API_ENDPOINTS.auth}/register`, { username, password });
@@ -14,7 +14,12 @@ export const login = async (username: string, password: string) => {
     const { accessToken, refreshToken, accessTokenExpireDate, refreshTokenExpireDate, userId, userIdExpireDate } = response.data;
 
     // Store tokens in storage
-    setTokensAndUserId(accessToken, refreshToken, userId, accessTokenExpireDate, refreshTokenExpireDate, userIdExpireDate);
+    setToken('accessToken', accessToken);
+    setToken('accessTokenExpireDate', accessTokenExpireDate);
+    setToken('refreshToken', refreshToken);
+    setToken('refreshTokenExpireDate', refreshTokenExpireDate);
+    setToken('userId', String(userId));
+    setToken('userIdExpireDate', userIdExpireDate);
 
     return response.data;
 };

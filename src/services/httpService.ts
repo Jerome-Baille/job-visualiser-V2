@@ -4,7 +4,7 @@ import { logout } from '../services/authService'
 import { store } from '../store';
 import { setUserAuthenticated } from '../redux/actions/authActions';
 import { showLoader, hideLoader } from '../redux/reducers/loadingSlice';
-import { getTokenAndUserId, setTokensAndUserId } from '../helpers/cookieHelper';
+import { setToken, getToken } from '../helpers/cookieHelper';
 
 const handleLogout = (errorMessage: string) => {
     store.dispatch(setUserAuthenticated(false));
@@ -17,20 +17,23 @@ const instance = axios.create();
 
 // Function to refresh token
 async function refreshTokenFunction() {
-    const { refreshToken } = getTokenAndUserId();
+    const refreshToken = getToken('refreshToken');
 
     if (!refreshToken || refreshToken === 'undefined') {
         handleLogout('Refresh token is missing');
     }
 
     const response = await instance.post(`${API_ENDPOINTS.auth}/refresh`, { refreshToken });
-    const { accessToken: newAccessToken, refreshToken: newRefreshToken, accessTokenExpireDate: newAccessTokenExpireDate, refreshTokenExpireDate: newRefreshTokenExpireDate, userId, userIdExpireDate } = response.data;
+    const { accessToken: newAccessToken, accessTokenExpireDate: newAccessTokenExpireDate } = response.data;
 
-    if (!newAccessToken || !newRefreshToken) {
+    if (!newAccessToken) {
+        console.log(response.data)
         handleLogout('Tokens are missing in the response');
     }
 
-    setTokensAndUserId(newAccessToken, newRefreshToken, userId, newAccessTokenExpireDate, newRefreshTokenExpireDate, userIdExpireDate);
+    // Set tokens in storage
+    setToken('accessToken', newAccessToken);
+    setToken('accessTokenExpireDate', newAccessTokenExpireDate);
     return newAccessToken;
 }
 
@@ -40,9 +43,10 @@ instance.interceptors.request.use(async (config) => {
     store.dispatch(showLoader());
 
     // Get token and expiration date from storage
-    const auth = getTokenAndUserId();
-    let { accessToken } = auth;
-    const { refreshToken, accessTokenExpireDate, refreshTokenExpireDate } = auth;
+    let accessToken = getToken('accessToken');
+    const refreshToken = getToken('refreshToken');
+    const accessTokenExpireDate = getToken('accessTokenExpireDate');
+    const refreshTokenExpireDate = getToken('refreshTokenExpireDate');
 
     // If refresh token is missing, logout the user
     if (!refreshToken || (refreshTokenExpireDate && new Date().getTime() > new Date(refreshTokenExpireDate).getTime())) {
