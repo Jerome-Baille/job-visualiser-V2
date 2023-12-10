@@ -25,13 +25,18 @@ function Layout() {
   const isLargerThanMD = useBreakpointValue({ base: false, md: true });
 
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      const isValidToken = await checkTokenValidity();
-      dispatch(setUserAuthenticated(isValidToken));
-      setIsAuthChecked(true);
-    };
+    try {
+      const checkAuthStatus = async () => {
+        const isValidToken = await checkTokenValidity();
+        dispatch(setUserAuthenticated(isValidToken));
+        setIsAuthChecked(true);
+      };
+  
+      checkAuthStatus();
+    } catch (error: unknown) {
+      console.error(error);
+    }
 
-    checkAuthStatus();
   }, [dispatch]);
 
   if (!isAuthChecked) {

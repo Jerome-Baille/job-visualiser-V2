@@ -12,6 +12,7 @@ import Task from '../Task/Task';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import React from 'react';
 import { JobsContext } from '../contexts/JobsContext';
+import { showToast } from '../services/toastService';
 
 
 interface JobBoxProps {
@@ -26,10 +27,14 @@ const Dashboard = () => {
     const isAuthenticated = useSelector((state: { auth: AuthState }) => state.auth.isAuthenticated);
 
     useEffect(() => {
-        getOpportunities()
-            .then(data => {
-                setJobs(data)
-            })
+        try {
+            getOpportunities()
+                .then(data => {
+                    setJobs(data)
+                })
+        } catch (error: unknown) {
+            showToast({ type: 'error', message: error instanceof Error ? error.message : 'An unknown error occurred' });
+        }
     }, []);
 
     const positiveJobs = jobs.filter(job => job.decision === 'positive').length;

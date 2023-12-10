@@ -14,12 +14,9 @@ export const login = async (username: string, password: string) => {
     const { accessToken, refreshToken, accessTokenExpireDate, refreshTokenExpireDate, userId, userIdExpireDate } = response.data;
 
     // Store tokens in storage
-    setToken('accessToken', accessToken);
-    setToken('accessTokenExpireDate', accessTokenExpireDate);
-    setToken('refreshToken', refreshToken);
-    setToken('refreshTokenExpireDate', refreshTokenExpireDate);
-    setToken('userId', String(userId));
-    setToken('userIdExpireDate', userIdExpireDate);
+    setToken('accessToken', accessToken, accessTokenExpireDate);
+    setToken('refreshToken', refreshToken, refreshTokenExpireDate);
+    setToken('userId', String(userId), userIdExpireDate);
 
     return response.data;
 };

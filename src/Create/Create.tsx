@@ -44,7 +44,7 @@ const Create: React.FC = () => {
                 >
                     {({ isSubmitting }) => (
                         <Form>
-                            <VStack spacing={4} align="stretch">
+                            <VStack spacing={4} align="flex-end">
                                 <Field name="name">
                                     {({ field, form }: FieldProps) => (
                                         <FormControl isInvalid={!!(form.errors.name && form.touched.name)}>

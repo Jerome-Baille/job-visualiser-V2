@@ -28,7 +28,9 @@ const Sidebar: FC = () => {
     }, []);
 
     useEffect(() => {
-        setToken('isSidebarClosed', String(isSidebarClosed));
+        const expireDate = new Date();
+        expireDate.setFullYear(expireDate.getFullYear() + 1);
+        setToken('isSidebarClosed', String(isSidebarClosed), expireDate.toISOString());
     }, [isSidebarClosed]);
 
     return (
