@@ -4,7 +4,6 @@ import { logout } from '../services/authService'
 import { store } from '../store';
 import { setUserAuthenticated } from '../redux/actions/authActions';
 import { showLoader, hideLoader } from '../redux/reducers/loadingSlice';
-import { setToken, getToken } from '../helpers/cookieHelper';
 
 const handleLogout = (errorMessage: string) => {
     store.dispatch(setUserAuthenticated(false));
@@ -17,22 +16,14 @@ const instance = axios.create();
 
 // Function to refresh token
 async function refreshTokenFunction() {
-    const refreshToken = getToken('refreshToken');
-
-    if (!refreshToken || refreshToken === 'undefined') {
-        handleLogout('Refresh token is missing');
-    }
-
     try {
-        const response = await instance.post(`${API_ENDPOINTS.auth}/refresh`, { refreshToken });
-        const { accessToken: newAccessToken, accessTokenExpireDate: newAccessTokenExpireDate } = response.data;
+        const response = await instance.post(`${API_ENDPOINTS.auth}/refresh`, {}, { withCredentials: true });
+        const { accessToken: newAccessToken } = response.data;
 
         if (!newAccessToken) {
             handleLogout('Tokens are missing in the response');
         }
 
-        // Set tokens in storage
-        setToken('accessToken', newAccessToken, newAccessTokenExpireDate);
         return newAccessToken;
     } catch (error) {
         handleLogout('Failed to refresh access token');
@@ -41,24 +32,9 @@ async function refreshTokenFunction() {
 
 // Add a request interceptor
 instance.interceptors.request.use(
-    async (config) => {
+    (config) => {
         // Show loader
         store.dispatch(showLoader());
-
-        // Get token and expiration date from storage
-        let accessToken = getToken('accessToken');
-
-        // If token is expired, refresh it
-        if (accessToken && accessToken === null) {
-            try {
-                accessToken = await refreshTokenFunction();
-            } catch (error) {
-                handleLogout('Failed to refresh access token');
-            }
-        }
-
-        // Set token in headers
-        config.headers.Authorization = `Bearer ${accessToken}`;
         return config;
     }, (error) => {
         store.dispatch(hideLoader());
@@ -72,21 +48,18 @@ instance.interceptors.response.use(
         store.dispatch(hideLoader());
         return response;
     }, async (error) => {
-        if (error.config && error.response && (error.response.status === 403 || error.response.status === 401)) {
+        if (error.config && error.response && (error.response.status === 403)) {
             const originalRequest = error.config;
             const retryCount = originalRequest._retryCount || 0;
 
-            if (retryCount >= 3) {
+            if (retryCount >= 2) {
                 store.dispatch(hideLoader());
-                throw new Error('Failed to refresh access token after 3 retries');
+                throw new Error('Failed to refresh access token after 2 retries');
             }
 
             try {
                 // Refresh token
-                const newAccessToken = await refreshTokenFunction();
-
-                // Set token in headers
-                originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+                await refreshTokenFunction();
 
                 originalRequest._retryCount = retryCount + 1;
 

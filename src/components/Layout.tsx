@@ -7,10 +7,6 @@ import { Outlet } from 'react-router-dom';
 import { Box, Flex, useBreakpointValue } from '@chakra-ui/react';
 import Sidebar from './Sidebar';
 import { AuthState } from '../interfaces';
-import { useEffect, useState } from 'react';
-import { checkTokenValidity } from '../services/authService';
-import { useDispatch } from 'react-redux';
-import { setUserAuthenticated } from '../redux/actions/authActions';
 
 interface AppState {
   auth: AuthState;
@@ -20,28 +16,7 @@ interface AppState {
 function Layout() {
   const isAuthenticated = useSelector((state: { auth: AuthState }) => state.auth.isAuthenticated);
   const isLoading = useSelector((state: AppState) => state.loading);
-  const dispatch = useDispatch();
-  const [isAuthChecked, setIsAuthChecked] = useState(false);
   const isLargerThanMD = useBreakpointValue({ base: false, md: true });
-
-  useEffect(() => {
-    try {
-      const checkAuthStatus = async () => {
-        const isValidToken = await checkTokenValidity();
-        dispatch(setUserAuthenticated(isValidToken));
-        setIsAuthChecked(true);
-      };
-  
-      checkAuthStatus();
-    } catch (error: unknown) {
-      console.error(error);
-    }
-
-  }, [dispatch]);
-
-  if (!isAuthChecked) {
-    return <Loader />
-  }
 
   return (
     <>

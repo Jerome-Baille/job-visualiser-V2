@@ -3,27 +3,37 @@ import { API_ENDPOINTS } from "../config/apiConfig";
 import { JobData } from "../interfaces";
 
 export const postOpportunity = async (opportunity: JobData) => {
-    const response = await http.post(`${API_ENDPOINTS.job}`, opportunity);
+    const response = await http.post(`${API_ENDPOINTS.job}`, opportunity, {
+        withCredentials: true
+    });
     return response.data;
 }
 
 export const getOpportunities = async () => {
-    const response = await http.get(`${API_ENDPOINTS.job}`);
+    const response = await http.get(`${API_ENDPOINTS.job}`, {
+        withCredentials: true
+    });
     return response.data;
-}
+};
 
 export const getOpportunity = async (id: string) => {
-    const response = await http.get(`${API_ENDPOINTS.job}/${id}`);
+    const response = await http.get(`${API_ENDPOINTS.job}/${id}`, {
+        withCredentials: true
+    });
     return response.data;
 }
 
 export const putOpportunity = async (opportunity: JobData) => {
-    const response = await http.patch(`${API_ENDPOINTS.job}/${opportunity.id}`, opportunity);
+    const response = await http.patch(`${API_ENDPOINTS.job}/${opportunity.id}`, opportunity, {
+        withCredentials: true
+    });
     return response;
 }
 
 export const deleteOpportunity = async (id: string) => {
-    const response = await http.delete(`${API_ENDPOINTS.job}/${id}`);
+    const response = await http.delete(`${API_ENDPOINTS.job}/${id}`, {
+        withCredentials: true
+    });
     return response;
 }
 

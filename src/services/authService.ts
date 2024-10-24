@@ -1,7 +1,5 @@
 import axios from 'axios';
-import http from './httpService';
 import { API_ENDPOINTS } from '../config/apiConfig';
-import { setToken, removeTokensAndUserId } from '../helpers/cookieHelper';
 
 export const register = async (username: string, password: string) => {
     const response = await axios.post(`${API_ENDPOINTS.auth}/register`, { username, password });
@@ -9,32 +7,23 @@ export const register = async (username: string, password: string) => {
 }
 
 export const login = async (username: string, password: string) => {
-    const response = await axios.post(`${API_ENDPOINTS.auth}/login`, { username, password });
-
-    const { accessToken, refreshToken, accessTokenExpireDate, refreshTokenExpireDate, userId, userIdExpireDate } = response.data;
-
-    // Store tokens in storage
-    setToken('accessToken', accessToken, accessTokenExpireDate);
-    setToken('refreshToken', refreshToken, refreshTokenExpireDate);
-    setToken('userId', String(userId), userIdExpireDate);
-
+    const response = await axios.post(`${API_ENDPOINTS.auth}/login`, { username, password }, { withCredentials: true });
     return response.data;
 };
 
 export const logout = async () => {
-    removeTokensAndUserId();
-    localStorage.clear();
+    const response = await axios.post(`${API_ENDPOINTS.auth}/logout`, {}, { withCredentials: true });
+    return response.data;
 };
 
-export const checkTokenValidity = async () => {
+export const verifyToken = async (): Promise<boolean> => {
     try {
-        // Send a request to the token verification endpoint
-        const response = await http.get(`${API_ENDPOINTS.auth}/verify`);
-
-        // If the token is valid, the server should return a success response
-        return response.data.auth;
+        const response = await axios.get(
+            `${API_ENDPOINTS.cookie}/verify`,
+            { withCredentials: true }
+        );
+        return response.status === 200;
     } catch (error) {
-        // If the token is not valid or some other error occurred, return false
         return false;
     }
 };
