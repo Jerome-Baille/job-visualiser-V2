@@ -28,7 +28,7 @@ function Layout() {
 
           {isAuthenticated ? (
             <Flex
-              maxW={'100vw'}
+              maxW={'1280px'}
               margin={'auto'}
             >
               {isLargerThanMD && <Sidebar />}
@@ -40,7 +40,7 @@ function Layout() {
             </Flex>
           ) : (
             <Flex
-              maxW={'100vw'}
+              maxW={'1280px'}
               margin={'auto'}
             >
               <Box className="background-container">

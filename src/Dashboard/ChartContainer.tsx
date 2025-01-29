@@ -118,7 +118,7 @@ const ChartContainer = ({ jobs }: DashboardProps) => {
     return (
         <Box>
             <Grid templateColumns='repeat(auto-fit, minmax(190px, 1fr))' gap={4}>
-                <Card maxH='500px'>
+                <Card maxH='500px' position={'relative'}>
                     <CardHeader textAlign="center">
                         Applications per Month
                     </CardHeader>

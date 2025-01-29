@@ -14,16 +14,17 @@ function getMonthName(month: string) {
 
 const LineChart = ({ data, monthOrder, width, height }: LineChartProps) => {
     const svgRef = useRef<SVGSVGElement>(null);
+    const wrapperRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (!data) return;
+        if (!data || !svgRef.current || !wrapperRef.current) return;
 
-        if (!svgRef.current) return;
-
+        const wrapper = d3.select(wrapperRef.current);
         const svg = d3.select(svgRef.current);
 
         // Clear existing content
         svg.selectAll('*').remove();
+        wrapper.selectAll('.tooltip').remove();
 
         const margin = { top: 20, right: 20, bottom: 30, left: 40 };
         const innerWidth = width - margin.left - margin.right;
@@ -88,7 +89,7 @@ const LineChart = ({ data, monthOrder, width, height }: LineChartProps) => {
             .duration(1000)
             .style('opacity', 1); // Transition to full opacity
 
-        const tooltip = d3.select('body').append('div')
+        const tooltip = wrapper.append('div')
             .attr('class', 'tooltip')
             .style('opacity', 0)
             .style('position', 'absolute')
@@ -120,12 +121,15 @@ const LineChart = ({ data, monthOrder, width, height }: LineChartProps) => {
             .style('fill', 'steelblue')
             .style('opacity', 0) // Set initial opacity to 0
             .on('mouseover', (event, d) => {
+                const mouseX = event.pageX - wrapperRef.current!.getBoundingClientRect().left;
+                const mouseY = event.pageY - wrapperRef.current!.getBoundingClientRect().top;
+                
                 tooltip.transition()
                     .duration(200)
                     .style('opacity', .9);
                 tooltip.html(`${getMonthName(d.month)}: ${d.count} applications`)
-                    .style('left', (event.pageX - 50) + 'px')
-                    .style('top', (event.pageY - 35) + 'px');
+                    .style('left', `${mouseX}px`)
+                    .style('top', `${mouseY - 40}px`);
                 d3.select(event.target)
                     .style('fill', '#FCD07A'); // Change the fill color on hover
             })
@@ -146,18 +150,27 @@ const LineChart = ({ data, monthOrder, width, height }: LineChartProps) => {
 
     }, [data, monthOrder, height, width]);
 
-    return <svg ref={svgRef} width={width} height={height}></svg>;
+    return (
+        <div ref={wrapperRef} style={{ position: 'relative', width, height }}>
+            <svg ref={svgRef} width={width} height={height}></svg>
+        </div>
+    );
 };
 
 const BarChart = ({ data, width, height }: BarChartProps) => {
     const svgRef = useRef<SVGSVGElement>(null);
+    const wrapperRef = useRef<HTMLDivElement>(null);
     const margin = { top: 20, right: 20, bottom: 30, left: 40 }; // Define margin variables
 
     useEffect(() => {
+        if (!svgRef.current || !wrapperRef.current) return;
+
+        const wrapper = d3.select(wrapperRef.current);
         const svg = d3.select(svgRef.current);
 
         // Clear existing content
         svg.selectAll('*').remove();
+        wrapper.selectAll('.tooltip').remove();
 
         const innerWidth = width - margin.left - margin.right;
         const innerHeight = height - margin.top - margin.bottom;
@@ -189,7 +202,7 @@ const BarChart = ({ data, width, height }: BarChartProps) => {
             .selectAll('text')
             .attr('font-size', '12px');
 
-        const tooltip = d3.select('body').append('div')
+        const tooltip = wrapper.append('div')
             .attr('class', 'tooltip')
             .style('opacity', 0)
             .style('position', 'absolute')
@@ -213,19 +226,26 @@ const BarChart = ({ data, width, height }: BarChartProps) => {
             .style('opacity', 0) // Set initial opacity to 0
             .style('box-shadow', '2px 2px 5px rgba(0, 0, 0, 0.3)') // Add box shadow
             .on('mouseover', (event, d) => {
+                const mouseX = event.pageX - wrapperRef.current!.getBoundingClientRect().left;
+                const mouseY = event.pageY - wrapperRef.current!.getBoundingClientRect().top;
+
                 tooltip.transition()
                     .duration(200)
                     .style('opacity', .9);
                 tooltip.html(`${d.count} applications`)
-                    .style('left', (event.pageX - 50) + 'px')
-                    .style('top', (event.pageY - 35) + 'px');
+                    .style('left', `${mouseX}px`)
+                    .style('top', `${mouseY - 40}px`);
                 d3.select(event.target)
                     .attr('fill', '#FCD07A') // Change the fill color on hover
                     .style('cursor', 'pointer');
             })
             .on('mousemove', (event) => {
-                tooltip.style('left', (event.pageX - 50) + 'px')
-                    .style('top', (event.pageY - 35) + 'px');
+                const mouseX = event.pageX - wrapperRef.current!.getBoundingClientRect().left;
+                const mouseY = event.pageY - wrapperRef.current!.getBoundingClientRect().top;
+
+                tooltip
+                    .style('left', `${mouseX}px`)
+                    .style('top', `${mouseY - 40}px`);
             })
             .on('mouseout', (event) => {
                 tooltip.transition()
@@ -245,7 +265,9 @@ const BarChart = ({ data, width, height }: BarChartProps) => {
     }, [data, margin.bottom, margin.left, margin.right, margin.top, height, width]);
 
     return (
-        <svg ref={svgRef} width={width} height={height} />
+        <div ref={wrapperRef} style={{ position: 'relative', width, height }}>
+            <svg ref={svgRef} width={width} height={height} />
+        </div>
     );
 };
 

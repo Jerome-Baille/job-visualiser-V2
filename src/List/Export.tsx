@@ -4,11 +4,17 @@ import { Button, Select, Flex } from "@chakra-ui/react";
 import { showToast } from '../services/toastService';
 
 type FormatType = 'excel' | 'pdf' | '';
-type YearType = '2023' | '2022' | '0000' | '';
+type YearType = string;
 
 function ExportData() {
     const [selectedFormat, setSelectedFormat] = useState<FormatType>('');
     const [selectedYear, setSelectedYear] = useState<YearType>('');
+
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let year = 2022; year <= currentYear; year++) {
+        years.push(year);
+    }
 
     // Download the data as an excel file or a PDF file
     const handleExportClick = async () => {
@@ -44,8 +50,9 @@ function ExportData() {
                 onChange={(e) => setSelectedYear(e.target.value as YearType)}
             >
                 <option value="">Select a year</option>
-                <option value="2023">2023</option>
-                <option value="2022">2022</option>
+                {years.map((year) => (
+                    <option key={year} value={year}>{year}</option>
+                ))}
                 <option value="0000">All</option>
             </Select>
             <Select
