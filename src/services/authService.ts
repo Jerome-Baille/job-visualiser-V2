@@ -1,14 +1,20 @@
 import axios from 'axios';
 import { API_ENDPOINTS } from '../config/apiConfig';
 
-export const register = async (username: string, password: string) => {
-    const response = await axios.post(`${API_ENDPOINTS.auth}/register`, { username, password });
-    return response.data;
-}
+const buildReturnUrl = (path: string): string => {
+    const origin = window.location.origin;
+    // Since we're using HashRouter, we need to add the # to the path
+    return encodeURIComponent(`${origin}/#${path}`);
+};
 
-export const login = async (username: string, password: string) => {
-    const response = await axios.post(`${API_ENDPOINTS.auth}/login`, { username, password }, { withCredentials: true });
-    return response.data;
+export const register = async () => {
+    const returnUrl = buildReturnUrl('/auth/after-register');
+    window.location.href = `https://auth.jerome-baille.fr/register?returnUrl=${returnUrl}`;
+};
+
+export const login = async () => {
+    const returnUrl = buildReturnUrl('/auth/after-login');
+    window.location.href = `https://auth.jerome-baille.fr/login?returnUrl=${returnUrl}`;
 };
 
 export const logout = async () => {
@@ -19,10 +25,10 @@ export const logout = async () => {
 export const verifyToken = async (): Promise<boolean> => {
     try {
         const response = await axios.get(
-            `${API_ENDPOINTS.cookie}/verify`,
+            'https://auth.jerome-baille.fr/api/auth/verify',
             { withCredentials: true }
         );
-        return response.status === 200;
+        return response.status === 200 && response.data.status === 'success' && response.data.userId;
     } catch (error) {
         return false;
     }

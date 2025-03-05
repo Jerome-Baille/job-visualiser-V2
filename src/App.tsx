@@ -7,6 +7,9 @@ import Dashboard from './Dashboard/Dashboard';
 import Layout from './components/Layout';
 import Loader from './components/Loader';
 import Page404 from './components/Page404';
+import AfterLogin from './Auth/AfterLogin';
+import AfterRegister from './Auth/AfterRegister';
+import Auth from './Auth/Auth';
 
 // Lazy imports
 const Create = lazy(() => import('./Create/Create'));
@@ -21,7 +24,12 @@ import './App.css';
 function App() {
   return (
     <Routes>
-      <Route element={<Layout />} path='/'>
+      {/* Auth callback routes at root level */}
+      <Route path="/auth/after-login" element={<AfterLogin />} />
+      <Route path="/auth/after-register" element={<AfterRegister />} />
+      
+      {/* Main app routes under Layout */}
+      <Route element={<Layout />}>
         <Route index element={<Navigate to="/dashboard" />} />
         <Route path="Create" element={<Suspense fallback={<Loader />}><Create /></Suspense>} />
         <Route path="Dashboard" element={<Dashboard />} />
@@ -30,6 +38,7 @@ function App() {
         <Route path="Profile" element={<Suspense fallback={<Loader />}><Profile /></Suspense>} />
         <Route path="How-to-use" element={<Suspense fallback={<Loader />}><HowToUse /></Suspense>} />
         <Route path="/job/:id" element={<Suspense fallback={<Loader />}><Detail /></Suspense>} />
+        <Route path="auth" element={<Auth />} />
         <Route path="*" element={<Page404 />} />
       </Route>
     </Routes>
