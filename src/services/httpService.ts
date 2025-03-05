@@ -54,21 +54,30 @@ instance.interceptors.response.use(
 
             if (retryCount >= 2) {
                 store.dispatch(hideLoader());
-                throw new Error('Failed to refresh access token after 2 retries');
+                handleLogout('Failed to refresh access token after 2 retries');
+                return Promise.reject(error);
             }
 
             try {
                 // Refresh token
-                await refreshTokenFunction();
-
+                const newAccessToken = await refreshTokenFunction();
+                
+                // Update the retry count
                 originalRequest._retryCount = retryCount + 1;
+                
+                // Update the Authorization header with the new token if your API expects it
+                // If you're using HttpOnly cookies, this step might not be necessary
+                if (newAccessToken) {
+                    originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+                }
 
-                // Retry the original request
+                // Retry the original request with the new token
                 return instance(originalRequest);
             } catch (refreshError) {
                 // Hide loader
                 store.dispatch(hideLoader());
-                throw new Error('Failed to refresh access token after 403 response');
+                handleLogout('Failed to refresh access token after 403 response');
+                return Promise.reject(refreshError);
             }
         }
 
